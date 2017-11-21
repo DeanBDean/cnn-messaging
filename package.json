@@ -62,7 +62,7 @@
     "uuid": "^3.0.1"
   },
   "optionalDependencies": {
-    "uws": "^8.14.1"
+    "uws": "^9.14.0"
   },
   "directories": {
     "example": "example",
