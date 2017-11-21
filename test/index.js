@@ -110,11 +110,10 @@ describe('Message', function () {
         let msg;
         try {
             msg = new Message({context: {action: 'bad'}});
-            (true).should.equal(false); //shouldnt get here
         } catch (e) {
-            (e).should.exist;
-            (msg === undefined).should.be.true;
+            (e).should.not.exist;
         }
+        (msg.context.action).should.equal('event');
     });
 });
 
