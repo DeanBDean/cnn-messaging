@@ -21,106 +21,106 @@ messenger.start()
 
 function handler(req, res) {
     fs.readFile(`${__dirname}/index.html`,
-    function (err, data) {
-        if (err) {
-            res.writeHead(500);
-            return res.end('Error loading index.html');
-        }
+        function (err, data) {
+            if (err) {
+                res.writeHead(500);
+                return res.end('Error loading index.html');
+            }
 
-        const objectId = uuidV1();
-        setTimeout(() => {
-            messenger.publish('test.message.new', new Message({
-                context: {
-                    model: 'person',
-                    action: 'new',
-                    objectId,
-                    objectVersion: 1
-                },
-                event: {
-                    add: {
-                        name: {
-                            first: 'Bob'
+            const objectId = uuidV1();
+            setTimeout(() => {
+                messenger.publish('test.message.new', new Message({
+                    context: {
+                        model: 'person',
+                        action: 'new',
+                        objectId,
+                        objectVersion: 1
+                    },
+                    event: {
+                        add: {
+                            name: {
+                                first: 'Bob'
+                            }
                         }
                     }
-                }
-            }));
-        }, 2000);
+                }));
+            }, 2000);
 
-        setTimeout(() => {
-            messenger.publish('test.message.update', new Message({
-                context: {
-                    model: 'person',
-                    action: 'update',
-                    objectId,
-                    objectVersion: 2
-                },
-                event: {
-                    add: {
-                        name: {
-                            last: 'Thibault'
+            setTimeout(() => {
+                messenger.publish('test.message.update', new Message({
+                    context: {
+                        model: 'person',
+                        action: 'update',
+                        objectId,
+                        objectVersion: 2
+                    },
+                    event: {
+                        add: {
+                            name: {
+                                last: 'Thibault'
+                            }
                         }
                     }
-                }
-            }));
-        }, 4000);
+                }));
+            }, 4000);
 
-        setTimeout(() => {
-            messenger.publish('test.message.update', new Message({
-                context: {
-                    model: 'person',
-                    action: 'update',
-                    objectId,
-                    objectVersion: 3
-                },
-                event: {
-                    add: {
-                        status: 'Listening to John Lennon',
-                        favoriteSongs: [],
-                        songsHeard: 0
-                    }
-                }
-            }));
-        }, 6000);
-
-        setTimeout(() => {
-            messenger.publish('test.message.update', new Message({
-                context: {
-                    model: 'person',
-                    action: 'update',
-                    objectId,
-                    objectVersion: 4
-                },
-                event: {
-                    push: {
-                        favoriteSongs: 'Imagine'
+            setTimeout(() => {
+                messenger.publish('test.message.update', new Message({
+                    context: {
+                        model: 'person',
+                        action: 'update',
+                        objectId,
+                        objectVersion: 3
                     },
-                    increment: {
-                        songsHeard: 1
+                    event: {
+                        add: {
+                            status: 'Listening to John Lennon',
+                            favoriteSongs: [],
+                            songsHeard: 0
+                        }
                     }
-                }
-            }));
-        }, 8000);
+                }));
+            }, 6000);
 
-        setTimeout(() => {
-            messenger.publish('test.message.update', new Message({
-                context: {
-                    model: 'person',
-                    action: 'update',
-                    objectId,
-                    objectVersion: 5
-                },
-                event: {
-                    push: {
-                        favoriteSongs: 'Strawberry Fields'
+            setTimeout(() => {
+                messenger.publish('test.message.update', new Message({
+                    context: {
+                        model: 'person',
+                        action: 'update',
+                        objectId,
+                        objectVersion: 4
                     },
-                    increment: {
-                        songsHeard: 1
+                    event: {
+                        push: {
+                            favoriteSongs: 'Imagine'
+                        },
+                        increment: {
+                            songsHeard: 1
+                        }
                     }
-                }
-            }));
-        }, 10000);
+                }));
+            }, 8000);
 
-        res.writeHead(200);
-        res.end(data);
-    });
+            setTimeout(() => {
+                messenger.publish('test.message.update', new Message({
+                    context: {
+                        model: 'person',
+                        action: 'update',
+                        objectId,
+                        objectVersion: 5
+                    },
+                    event: {
+                        push: {
+                            favoriteSongs: 'Strawberry Fields'
+                        },
+                        increment: {
+                            songsHeard: 1
+                        }
+                    }
+                }));
+            }, 10000);
+
+            res.writeHead(200);
+            res.end(data);
+        });
 }
