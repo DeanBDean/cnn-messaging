@@ -100,21 +100,6 @@ describe('Message', function () {
         const topic = msg.getTopic();
         topic.should.exist;
     });
-
-    it('should provide map invalid actions', function () {
-        const msg = new Message({context: {action: 'new'}});
-        (msg.context.action).should.equal('create');
-    });
-
-    it('should not accept invalid actions', function () {
-        let msg;
-        try {
-            msg = new Message({context: {action: 'bad'}});
-        } catch (e) {
-            (e).should.not.exist;
-        }
-        (msg.context.action).should.equal('event');
-    });
 });
 
 describe('AmqpMessenger', function () {
