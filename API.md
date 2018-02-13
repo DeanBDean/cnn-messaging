@@ -33,19 +33,19 @@ A messenger that can use amqp topic exchanges and queues
 
 **Parameters**
 
--   `params` **{amqp: {connectionString: [string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String), exchangeName: [string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)}, port: [number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)?, http&#x3A; any?}** 
+-   `params` **{amqp: {connectionString: [string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String), exchangeName: [string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)}, port: [number](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number)?, http&#x3A; any?}** 
 
 ### start
 
 start the service
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
 
 ### stop
 
 stop the service
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
 
 ### publish
 
@@ -56,7 +56,7 @@ publish a message to a topic
 -   `topicOrMessage` **any** 
 -   `messageOnly` **[Message](#message)** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
 
 ### \_createObservable
 
@@ -64,11 +64,11 @@ create an observable for a given topic, type, and queue
 
 **Parameters**
 
--   `topic` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
--   `type` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
--   `queue` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `topic` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `type` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `queue` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
 
 ### createNotificationObservable
 
@@ -76,9 +76,9 @@ create an observable for a given topic, that is meant for multiple recipients pe
 
 **Parameters**
 
--   `topic` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `topic` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
 
 ### createWorkObservable
 
@@ -86,10 +86,10 @@ create an observable for a given topic, that is meant for a single recipient per
 
 **Parameters**
 
--   `topic` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
--   `queue` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `topic` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `queue` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
 
 ## Message
 
@@ -103,13 +103,13 @@ A Message object
 
 Stringify the message
 
-Returns **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+Returns **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
 
 ### toWS
 
 Convert the message for websocket delivery
 
-Returns **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+Returns **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
 
 ### toAmqp
 
@@ -121,7 +121,7 @@ Returns **[Buffer](https://nodejs.org/api/buffer.html)**
 
 Get the preferred topic name from the message context
 
-Returns **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+Returns **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
 
 ### ack
 
@@ -154,19 +154,19 @@ An in-memory messenger, providing pub/sub like features
 
 **Parameters**
 
--   `params` **{port: [number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)?, http&#x3A; any?}** 
+-   `params` **{port: [number](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number)?, http&#x3A; any?}** 
 
 ### start
 
 start the service
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
 
 ### stop
 
 stop the service
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
 
 ### publish
 
@@ -177,7 +177,7 @@ publish a message to a topic
 -   `topicOrMessage` **any** 
 -   `messageOnly` **[Message](#message)** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
 
 ### createNotificationObservable
 
@@ -185,9 +185,9 @@ create an observable for a given topic, that is meant for multiple recipients pe
 
 **Parameters**
 
--   `topic` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `topic` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
 
 ### createWorkObservable
 
@@ -195,10 +195,10 @@ create an observable for a given topic, that is meant for a single recipient per
 
 **Parameters**
 
--   `topic` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
--   `sharedQueue` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `topic` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `sharedQueue` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
 
 ## WebsocketRelay
 
@@ -208,4 +208,4 @@ A performant websocket relay for messenger
 
 **Parameters**
 
--   `params` **{messenger: [Messenger](#messenger), port: [number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)?, http&#x3A; any?, pingInterval: [number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)}** 
+-   `params` **{messenger: [Messenger](#messenger), port: [number](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number)?, http&#x3A; any?, pingInterval: [number](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number)}** 

@@ -29,6 +29,10 @@ This module uses the [debug module](https://www.npmjs.com/package/debug). Add th
 * For messages sent using the new publish signature, the CRUD actions (the last part of the topic name) are now limited to the following options: ['create', 'update', 'delete', 'upsert', 'event'].
 * In an effort to normalize the CRUD actions, __the following action mappings will take place automatically:__ [new: 'create', insert: 'create', remove: 'delete', change: 'update'].
 
+### New in 3.1.0
+
+# Messages can now include an action of any type, not limited to CRUD. It will be on the consumer to effectively manage actions
+
 ### Messenger API
 
 * ```start()```: This will perform any asynchronous initialization required for the service.
