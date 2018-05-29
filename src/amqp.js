@@ -209,6 +209,7 @@ export default class AmqpMessenger extends Messenger {
                 }
                 delete this.subscriptions[type][topic];
                 delete this.observables[type][topic];
+                return Promise.resolve();
             };
         });
         return this.observables[type][topic];
