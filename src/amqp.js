@@ -6,6 +6,7 @@ import Message from './message';
 import Rx from 'rxjs';
 import Debug from 'debug';
 const debug = Debug('cnn-messaging:messenger:amqp');
+const restartTimeout = 3000;
 
 /**
 A messenger that can use amqp topic exchanges and queues
@@ -39,7 +40,15 @@ export default class AmqpMessenger extends Messenger {
             throw new Error('Not properly configured for AMQP. See the README.');
         }
     }
-
+    async restart(): Promise<*> {
+        try {
+            await this.start();
+        } catch (error) {
+            setTimeout(async () => {
+                await this.restart();
+            }, restartTimeout);
+        }
+    }
     /**
     start the service
     */
@@ -57,13 +66,24 @@ export default class AmqpMessenger extends Messenger {
             return Promise.reject(e);
         }
         this.connection = conn;
-        this.connection.on('error', (err) => {
-            if (err.message !== 'Connection closing') {
+        this.connection.on('error', async (err) => {
+            if (err && err.message !== 'Connection closing') {
                 console.error('AMQP connection error"', err.message);
             }
+            this.observables.forEach && this.observables.forEach((topicArray) => {
+                topicArray.forEach(async (observable) => {
+                    await observable.unsubscribe();
+                });
+            });
+            await this.restart();
+            console.log('AMQP connection restarted after error');
+            this.preservedObservableInputs && this.preservedObservableInputs.forEach(async ({topic, type, queue}) => {
+                await this._createObservable(topic, type, queue);
+                console.log(`AMQP Observable for topic ${topic}, type ${type} and queue ${queue} successfully restablished`);
+            });
         });
         this.connection.on('close', () => {
-            throw new Error('Lost connection to AMQP.');
+            console.error('Lost connection to AMQP.');
         });
         debug('created connection');
 
@@ -77,7 +97,6 @@ export default class AmqpMessenger extends Messenger {
         await this.channel.notification.assertExchange(this.params.exchangeName, 'topic', {durable: true});
         this.state = this.states[2];
         debug('started');
-
         return Promise.resolve();
     }
 
@@ -136,6 +155,14 @@ export default class AmqpMessenger extends Messenger {
         if (this.observables[type][topic]) {
             return this.observables[type][topic];
         }
+        if (!this.preservedObservableInputs) {
+            this.preservedObservableInputs = [];
+        }
+        this.preservedObservableInputs.push({
+            topic,
+            type,
+            queue
+        });
         debug(`creating ${type} observable for topic: ${topic}`);
         let queueparams = {
             durable: false,
@@ -165,20 +192,20 @@ export default class AmqpMessenger extends Messenger {
                 });
 
             // return the function that handles unsubscribe here
-            return () => {
+            return async () => {
                 debug(`stop ${type} subscription to ${topic}, queue: ${this.subscriptions[type][topic]}`);
                 if (type !== 'work') {
                     // unbind the queue from the topic to stop routing at the amqp server
-                    this.channel[type].unbindQueue(this.subscriptions[type][topic], this.params.exchangeName, topic);
+                    await this.channel[type].unbindQueue(this.subscriptions[type][topic], this.params.exchangeName, topic);
                     debug(`unbound queue ${this.subscriptions[type][topic]} to topic ${topic}`);
                 }
                 // stop consuming from the queue
-                this.channel[type].cancel(consTag);
+                await this.channel[type].cancel(consTag);
                 debug(`stopped receiving new ${type} messages from ${topic}`);
                 if (type !== 'work') {
                     // delete queue
                     debug(`deleting queue ${this.subscriptions[type][topic]}`);
-                    this.channel[type].deleteQueue(this.subscriptions[type][topic]);
+                    await this.channel[type].deleteQueue(this.subscriptions[type][topic]);
                 }
                 delete this.subscriptions[type][topic];
                 delete this.observables[type][topic];
