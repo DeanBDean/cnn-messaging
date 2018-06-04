@@ -32,7 +32,7 @@ export default class AmqpMessenger extends Messenger {
         };
         port?: number;
         http?: any;
-        websocketInactive?: boolean;
+        websocketActive?: boolean;
     }) {
         super(params);
         this.params = params.amqp;
