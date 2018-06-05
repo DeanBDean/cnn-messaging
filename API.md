@@ -2,28 +2,28 @@
 
 ### Table of Contents
 
--   [AmqpMessenger](#amqpmessenger)
-    -   [start](#start)
-    -   [stop](#stop)
-    -   [publish](#publish)
-    -   [\_createObservable](#_createobservable)
-    -   [createNotificationObservable](#createnotificationobservable)
-    -   [createWorkObservable](#createworkobservable)
--   [Message](#message)
-    -   [toString](#tostring)
-    -   [toWS](#tows)
-    -   [toAmqp](#toamqp)
-    -   [getTopic](#gettopic)
-    -   [ack](#ack)
-    -   [nack](#nack)
-    -   [fromAmqp](#fromamqp)
--   [Messenger](#messenger)
-    -   [start](#start-1)
-    -   [stop](#stop-1)
-    -   [publish](#publish-1)
-    -   [createNotificationObservable](#createnotificationobservable-1)
-    -   [createWorkObservable](#createworkobservable-1)
--   [WebsocketRelay](#websocketrelay)
+-   [AmqpMessenger][1]
+    -   [start][2]
+    -   [stop][3]
+    -   [publish][4]
+    -   [\_createObservable][5]
+    -   [createNotificationObservable][6]
+    -   [createWorkObservable][7]
+-   [Message][8]
+    -   [toString][9]
+    -   [toWS][10]
+    -   [toAmqp][11]
+    -   [getTopic][12]
+    -   [ack][13]
+    -   [nack][14]
+    -   [fromAmqp][15]
+-   [Messenger][16]
+    -   [start][17]
+    -   [stop][18]
+    -   [publish][19]
+    -   [createNotificationObservable][20]
+    -   [createWorkObservable][21]
+-   [WebsocketRelay][22]
 
 ## AmqpMessenger
 
@@ -33,19 +33,19 @@ A messenger that can use amqp topic exchanges and queues
 
 **Parameters**
 
--   `params` **{amqp: {connectionString: [string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String), exchangeName: [string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)}, port: [number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)?, http&#x3A; any?, websocketActive: [boolean](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?}** 
+-   `params` **{amqp: {connectionString: [string][23], exchangeName: [string][23]}, port: [number][24]?, http&#x3A; any?, websocketActive: [boolean][25]?}** 
 
 ### start
 
 start the service
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise][26]&lt;any>** 
 
 ### stop
 
 stop the service
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise][26]&lt;any>** 
 
 ### publish
 
@@ -54,9 +54,9 @@ publish a message to a topic
 **Parameters**
 
 -   `topicOrMessage` **any** 
--   `messageOnly` **[Message](#message)** 
+-   `messageOnly` **[Message][27]** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise][26]&lt;any>** 
 
 ### \_createObservable
 
@@ -64,11 +64,11 @@ create an observable for a given topic, type, and queue
 
 **Parameters**
 
--   `topic` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
--   `type` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
--   `queue` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `topic` **[string][23]** 
+-   `type` **[string][23]** 
+-   `queue` **[string][23]** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
+Returns **[Promise][26]&lt;Rx.Observable&lt;any>>** 
 
 ### createNotificationObservable
 
@@ -76,9 +76,9 @@ create an observable for a given topic, that is meant for multiple recipients pe
 
 **Parameters**
 
--   `topic` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `topic` **[string][23]** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
+Returns **[Promise][26]&lt;Rx.Observable&lt;any>>** 
 
 ### createWorkObservable
 
@@ -86,10 +86,10 @@ create an observable for a given topic, that is meant for a single recipient per
 
 **Parameters**
 
--   `topic` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
--   `queue` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `topic` **[string][23]** 
+-   `queue` **[string][23]** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
+Returns **[Promise][26]&lt;Rx.Observable&lt;any>>** 
 
 ## Message
 
@@ -103,25 +103,25 @@ A Message object
 
 Stringify the message
 
-Returns **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+Returns **[string][23]** 
 
 ### toWS
 
 Convert the message for websocket delivery
 
-Returns **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+Returns **[string][23]** 
 
 ### toAmqp
 
 Convert the message for amqp delivery
 
-Returns **[Buffer](https://nodejs.org/api/buffer.html)** 
+Returns **[Buffer][28]** 
 
 ### getTopic
 
 Get the preferred topic name from the message context
 
-Returns **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+Returns **[string][23]** 
 
 ### ack
 
@@ -144,7 +144,7 @@ Convert a raw amqp message into an instance of Message
 -   `rawMessage`  
 -   `channel`  
 
-Returns **[Message](#message)** 
+Returns **[Message][27]** 
 
 ## Messenger
 
@@ -154,19 +154,19 @@ An in-memory messenger, providing pub/sub like features
 
 **Parameters**
 
--   `params` **{port: [number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)?, http&#x3A; any?, websocketActive: [boolean](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?}** 
+-   `params` **{port: [number][24]?, http&#x3A; any?, websocketActive: [boolean][25]?}** 
 
 ### start
 
 start the service
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise][26]&lt;any>** 
 
 ### stop
 
 stop the service
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise][26]&lt;any>** 
 
 ### publish
 
@@ -175,9 +175,9 @@ publish a message to a topic
 **Parameters**
 
 -   `topicOrMessage` **any** 
--   `messageOnly` **[Message](#message)** 
+-   `messageOnly` **[Message][27]** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;any>** 
+Returns **[Promise][26]&lt;any>** 
 
 ### createNotificationObservable
 
@@ -185,9 +185,9 @@ create an observable for a given topic, that is meant for multiple recipients pe
 
 **Parameters**
 
--   `topic` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `topic` **[string][23]** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
+Returns **[Promise][26]&lt;Rx.Observable&lt;any>>** 
 
 ### createWorkObservable
 
@@ -195,10 +195,10 @@ create an observable for a given topic, that is meant for a single recipient per
 
 **Parameters**
 
--   `topic` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
--   `sharedQueue` **[string](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+-   `topic` **[string][23]** 
+-   `sharedQueue` **[string][23]** 
 
-Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)&lt;Rx.Observable&lt;any>>** 
+Returns **[Promise][26]&lt;Rx.Observable&lt;any>>** 
 
 ## WebsocketRelay
 
@@ -208,4 +208,62 @@ A performant websocket relay for messenger
 
 **Parameters**
 
--   `params` **{messenger: [Messenger](#messenger), port: [number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)?, http&#x3A; any?, pingInterval: [number](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number)}** 
+-   `params` **{messenger: [Messenger][29], port: [number][24]?, http&#x3A; any?, pingInterval: [number][24]}** 
+
+[1]: #amqpmessenger
+
+[2]: #start
+
+[3]: #stop
+
+[4]: #publish
+
+[5]: #_createobservable
+
+[6]: #createnotificationobservable
+
+[7]: #createworkobservable
+
+[8]: #message
+
+[9]: #tostring
+
+[10]: #tows
+
+[11]: #toamqp
+
+[12]: #gettopic
+
+[13]: #ack
+
+[14]: #nack
+
+[15]: #fromamqp
+
+[16]: #messenger
+
+[17]: #start-1
+
+[18]: #stop-1
+
+[19]: #publish-1
+
+[20]: #createnotificationobservable-1
+
+[21]: #createworkobservable-1
+
+[22]: #websocketrelay
+
+[23]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
+
+[24]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[25]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[26]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise
+
+[27]: #message
+
+[28]: https://nodejs.org/api/buffer.html
+
+[29]: #messenger
