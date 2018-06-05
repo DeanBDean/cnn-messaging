@@ -5,7 +5,7 @@ import Debug from 'debug';
 const debug = Debug('cnn-messaging:message');
 
 // allowed actions
-const actions = ['create', 'update', 'delete', 'upsert', 'event'];
+const actions = ['create', 'update', 'delete', 'upsert', 'event', 'error'];
 
 // map older actions to allowed actions
 const actionsMap = {

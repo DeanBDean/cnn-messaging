@@ -233,9 +233,11 @@ describe('AmqpMessenger', function () {
                 return o.subscribe();
             })
             .then((sub) => {
+                return sub.unsubscribe();
+            })
+            .then(() => {
                 return new Promise((resolve) => {
                     setTimeout(() => {
-                        sub.unsubscribe();
                         resolve();
                     }, 1000);
                 });
