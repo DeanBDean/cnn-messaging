@@ -1,16 +1,24 @@
 // @flow
 
 import events from 'events';
-import Rx from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import Message from './message';
 import WebsocketRelay from './websocket';
 import Debug from 'debug';
 const debug = Debug('cnn-messaging:messenger');
 
+export const states = {
+    stopped: 'STOPPED',
+    starting: 'STARTING',
+    started: 'STARTED',
+    stopping: 'STOPPING',
+    error: 'ERROR'
+}
+
 /**
 An in-memory messenger, providing pub/sub like features
 */
-export default class Messenger extends events.EventEmitter {
+export class Messenger extends events.EventEmitter {
     state: string;
     subscriptions: {
         notification: Object;
@@ -20,7 +28,6 @@ export default class Messenger extends events.EventEmitter {
         notification: Object;
         work: Object;
     }
-    states: Array<string>;
     websocketRelay: WebsocketRelay;
 
     /**
@@ -30,19 +37,13 @@ export default class Messenger extends events.EventEmitter {
         super();
         params = params || {};
         let websocketActive;
-        if (typeof websocketActive === 'undefined') { // default is for websocket to be active
+        if (typeof params.websocketActive === 'undefined') { // default is for websocket to be active
             websocketActive = true;
         } else {
             websocketActive = params.websocketActive;
         }
-        this.states = [
-            'STOPPED',
-            'STARTING',
-            'STARTED',
-            'STOPPING',
-            'ERROR'
-        ];
-        this.state = this.states[0];
+
+        this.state = states.stopped;
         this.subscriptions = {
             notification: {},
             work: {}
@@ -76,13 +77,13 @@ export default class Messenger extends events.EventEmitter {
     */
     async start(): Promise<*> {
         return new Promise((resolve, reject) => {
-            if (this.state !== this.states[0]) {
+            if (this.state !== states.stopped) {
                 return reject(new Error(`Cannot start when in state: ${this.state}`));
             }
-            this.state = this.states[1];
+            this.state = states.starting;
             debug('starting');
 
-            this.state = this.states[2];
+            this.state = states.started;
             debug('started');
 
             resolve();
@@ -94,13 +95,13 @@ export default class Messenger extends events.EventEmitter {
     */
     async stop(): Promise<*> {
         return new Promise((resolve, reject) => {
-            if (this.state !== this.states[2]) {
+            if (this.state !== states.started) {
                 return reject(new Error(`Cannot stop when in state: ${this.state}`));
             }
-            this.state = this.states[3];
+            this.state = states.stopping;
             debug('stopping');
 
-            this.state = this.states[0];
+            this.state = states.stopped;
             debug('stopped');
 
             resolve();
@@ -128,16 +129,17 @@ export default class Messenger extends events.EventEmitter {
     /**
     create an observable for a given topic, that is meant for multiple recipients per message
     */
-    async createNotificationObservable(topic: string): Promise<Rx.Observable<*>> {
+    async createNotificationObservable(topic: string): Promise<Observable<*>> {
         debug(`creating observable for topic: ${topic}`);
-        return Promise.resolve(new Rx.Subject());
+        return Promise.resolve(new Subject());
     }
 
     /**
     create an observable for a given topic, that is meant for a single recipient per message
     */
-    async createWorkObservable(topic: string, sharedQueue: string): Promise<Rx.Observable<*>> {
+    async createWorkObservable(topic: string, sharedQueue: string): Promise<Observable<*>> {
         debug(`creating observable for: ${sharedQueue} to topic: ${topic}`);
-        return Promise.resolve(new Rx.Subject());
+        return Promise.resolve(new Subject());
     }
 }
+

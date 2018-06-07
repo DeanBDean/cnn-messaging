@@ -15,7 +15,6 @@ const amqpTestConfig = {
 };
 
 describe('Basic Functionality', function () {
-
     it('should not start without a config', function () {
         try {
             const messenger = new Messenger();

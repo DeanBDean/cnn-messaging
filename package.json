@@ -58,7 +58,7 @@
     "amqplib": "^0.5.1",
     "debug": "^3.0.1",
     "postinstall-build": "^5.0.1",
-    "rxjs": "^5.3.0",
+    "rxjs": "^6.2.0",
     "uuid": "^3.0.1"
   },
   "optionalDependencies": {

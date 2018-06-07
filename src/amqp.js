@@ -1,9 +1,9 @@
 // @flow
 
 import amqplib from 'amqplib';
-import Messenger from './messenger';
+import { Messenger, states } from './messenger';
 import Message from './message';
-import Rx from 'rxjs';
+import { Observable } from 'rxjs';
 import Debug from 'debug';
 const debug = Debug('cnn-messaging:messenger:amqp');
 const restartTimeout = 3000;
@@ -53,10 +53,10 @@ export default class AmqpMessenger extends Messenger {
     start the service
     */
     async start(): Promise<*> {
-        if (this.state !== this.states[0]) {
+        if (this.state !== states.stopped) {
             return Promise.reject(new Error(`Cannot start when in state: ${this.state}`));
         }
-        this.state = this.states[1];
+        this.state = states.starting;
         debug('starting');
 
         let conn;
@@ -95,7 +95,7 @@ export default class AmqpMessenger extends Messenger {
         debug('created channels');
 
         await this.channel.notification.assertExchange(this.params.exchangeName, 'topic', {durable: true});
-        this.state = this.states[2];
+        this.state = states.started;
         debug('started');
         return Promise.resolve();
     }
@@ -104,10 +104,10 @@ export default class AmqpMessenger extends Messenger {
     stop the service
     */
     async stop(): Promise<*> {
-        if (this.state !== this.states[2]) {
+        if (this.state !== states.started) {
             return Promise.reject(new Error(`Cannot stop when in state: ${this.state}`));
         }
-        this.state = this.states[3];
+        this.state = states.stopping;
         debug('stopping');
 
         await this.channel.work.close();
@@ -117,7 +117,7 @@ export default class AmqpMessenger extends Messenger {
         await this.connection.close();
         debug('closed connection');
 
-        this.state = this.states[0];
+        this.state = states.stopped;
         debug('stopped');
 
         return Promise.resolve();
@@ -151,7 +151,7 @@ export default class AmqpMessenger extends Messenger {
     /**
     create an observable for a given topic, type, and queue
     */
-    async _createObservable(topic: string, type: string, queue: string): Promise<Rx.Observable<*>> {
+    async _createObservable(topic: string, type: string, queue: string): Promise<Observable<*>> {
         if (this.observables[type][topic]) {
             return this.observables[type][topic];
         }
@@ -182,7 +182,7 @@ export default class AmqpMessenger extends Messenger {
         await this.channel[type].bindQueue(q.queue, this.params.exchangeName, topic);
         debug(`created ${type} subscription to topic: ${topic}, queue: ${this.subscriptions[type][topic]}`);
         let consTag;
-        this.observables[type][topic] = new Rx.Observable.create((observer) => {
+        this.observables[type][topic] = new Observable.create((observer) => {
             // start consuming from the amqp queue
             this.channel[type].consume(this.subscriptions[type][topic], (msg) => {
                 observer.next(Message.fromAmqp(msg, this.channel[type]));
@@ -218,14 +218,14 @@ export default class AmqpMessenger extends Messenger {
     /**
     create an observable for a given topic, that is meant for multiple recipients per message
     */
-    async createNotificationObservable(topic: string): Promise<Rx.Observable<*>> {
+    async createNotificationObservable(topic: string): Promise<Observable<*>> {
         return this._createObservable(topic, 'notification', '');
     }
 
     /**
     create an observable for a given topic, that is meant for a single recipient per message
     */
-    async createWorkObservable(topic: string, queue: string): Promise<Rx.Observable<*>> {
+    async createWorkObservable(topic: string, queue: string): Promise<Observable<*>> {
         return this._createObservable(topic, 'work', queue);
     }
 }
