@@ -39,11 +39,19 @@ export class AmqpMessenger extends Messenger {
 
     // Reset the observable connections to the preserved observables and subscribes
     async resetConnections() {
-        for await (const result of this.restartIterator()) {
-            if (result.done) {
-                break;
+        let restartFailed = false;
+        try {
+            for await (const result of this.restartIterator()) {
+                if (result.done) {
+                    break;
+                }
+                console.log(`AMQP connection restart failed: ${result.errorMessage}, attempting again`);
             }
-            console.log(`AMQP connection restart failed: ${result.errorMessage}, attempting again`);
+        } catch (error) {
+            restartFailed = true;
+        }
+        if (restartFailed) {
+            return Promise.reject(new Error('Could not reset connections'));
         }
         console.log('AMQP connection restarted after connection closed');
         this.preservedObservableInputs.forEach(({unsubscribes}) => {
@@ -94,9 +102,13 @@ export class AmqpMessenger extends Messenger {
             this.subjects.forEach(async ({ subject }) => {
                 await subject.error();
             });
-            await this.resetConnections();
+            try {
+                await this.resetConnections();
+            } catch (error) {
+                console.error(error.message);
+            }
         });
-        this.connection.on('close', () => {
+        this.connection.on('close', async () => {
             this.state = states.stopped;
             let subjectHadError = false;
             this.subjects.forEach(async ({ subject }) => {
@@ -107,7 +119,11 @@ export class AmqpMessenger extends Messenger {
                 }
             })
             if (!subjectHadError) {
-                this.resetConnections();
+                try {
+                    await this.resetConnections();
+                } catch (error) {
+                    console.error(error.message);
+                }
             }
         });
         debug('created connection');
