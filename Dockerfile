@@ -1,4 +1,4 @@
-FROM node:8.4.0
+FROM node:8.11.1
 
 # Build environment variables
 ENV APP_PATH=/home/app
