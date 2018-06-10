@@ -96,33 +96,37 @@ export class AmqpMessenger extends Messenger {
         this.connection = conn;
         this.connection.on('error', async (err) => {
             this.state = states.stopped;
-            if (err && err.message !== 'Connection closing') {
-                console.error('AMQP connection error"', err.message);
-            }
-            this.subjects.forEach(async ({ subject }) => {
-                await subject.error();
-            });
-            try {
-                await this.resetConnections();
-            } catch (error) {
-                console.error(error.message);
-            }
-        });
-        this.connection.on('close', async () => {
-            this.state = states.stopped;
-            let subjectHadError = false;
-            this.subjects.forEach(async ({ subject }) => {
-                if (!subject.hasError) {
-                    await subject.complete();
-                } else {
-                    subjectHadError = true;
+            if (!this.selfCalledClose) {
+                if (err && err.message !== 'Connection closing') {
+                    console.error('AMQP connection error"', err.message);
                 }
-            })
-            if (!subjectHadError) {
+                this.subjects.forEach(async ({ subject }) => {
+                    await subject.error();
+                });
                 try {
                     await this.resetConnections();
                 } catch (error) {
                     console.error(error.message);
+                }
+            }
+        });
+        this.connection.on('close', async () => {
+            this.state = states.stopped;
+            if (!this.selfCalledClose) {
+                let subjectHadError = false;
+                this.subjects.forEach(async ({ subject }) => {
+                    if (!subject.hasError) {
+                        await subject.complete();
+                    } else {
+                        subjectHadError = true;
+                    }
+                })
+                if (!subjectHadError) {
+                    try {
+                        await this.resetConnections();
+                    } catch (error) {
+                        console.error(error.message);
+                    }
                 }
             }
         });

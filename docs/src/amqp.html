@@ -222,33 +222,37 @@
         <span class="hljs-keyword">this</span>.connection = conn;
         <span class="hljs-keyword">this</span>.connection.on(<span class="hljs-string">'error'</span>, <span class="hljs-keyword">async</span> (err) =&gt; {
             <span class="hljs-keyword">this</span>.state = states.stopped;
-            <span class="hljs-keyword">if</span> (err &amp;&amp; err.message !== <span class="hljs-string">'Connection closing'</span>) {
-                <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'AMQP connection error"'</span>, err.message);
-            }
-            <span class="hljs-keyword">this</span>.subjects.forEach(<span class="hljs-keyword">async</span> ({ subject }) =&gt; {
-                <span class="hljs-keyword">await</span> subject.error();
-            });
-            <span class="hljs-keyword">try</span> {
-                <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.resetConnections();
-            } <span class="hljs-keyword">catch</span> (error) {
-                <span class="hljs-built_in">console</span>.error(error.message);
-            }
-        });
-        <span class="hljs-keyword">this</span>.connection.on(<span class="hljs-string">'close'</span>, <span class="hljs-keyword">async</span> () =&gt; {
-            <span class="hljs-keyword">this</span>.state = states.stopped;
-            <span class="hljs-keyword">let</span> subjectHadError = <span class="hljs-literal">false</span>;
-            <span class="hljs-keyword">this</span>.subjects.forEach(<span class="hljs-keyword">async</span> ({ subject }) =&gt; {
-                <span class="hljs-keyword">if</span> (!subject.hasError) {
-                    <span class="hljs-keyword">await</span> subject.complete();
-                } <span class="hljs-keyword">else</span> {
-                    subjectHadError = <span class="hljs-literal">true</span>;
+            <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">this</span>.selfCalledClose) {
+                <span class="hljs-keyword">if</span> (err &amp;&amp; err.message !== <span class="hljs-string">'Connection closing'</span>) {
+                    <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'AMQP connection error"'</span>, err.message);
                 }
-            })
-            <span class="hljs-keyword">if</span> (!subjectHadError) {
+                <span class="hljs-keyword">this</span>.subjects.forEach(<span class="hljs-keyword">async</span> ({ subject }) =&gt; {
+                    <span class="hljs-keyword">await</span> subject.error();
+                });
                 <span class="hljs-keyword">try</span> {
                     <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.resetConnections();
                 } <span class="hljs-keyword">catch</span> (error) {
                     <span class="hljs-built_in">console</span>.error(error.message);
+                }
+            }
+        });
+        <span class="hljs-keyword">this</span>.connection.on(<span class="hljs-string">'close'</span>, <span class="hljs-keyword">async</span> () =&gt; {
+            <span class="hljs-keyword">this</span>.state = states.stopped;
+            <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">this</span>.selfCalledClose) {
+                <span class="hljs-keyword">let</span> subjectHadError = <span class="hljs-literal">false</span>;
+                <span class="hljs-keyword">this</span>.subjects.forEach(<span class="hljs-keyword">async</span> ({ subject }) =&gt; {
+                    <span class="hljs-keyword">if</span> (!subject.hasError) {
+                        <span class="hljs-keyword">await</span> subject.complete();
+                    } <span class="hljs-keyword">else</span> {
+                        subjectHadError = <span class="hljs-literal">true</span>;
+                    }
+                })
+                <span class="hljs-keyword">if</span> (!subjectHadError) {
+                    <span class="hljs-keyword">try</span> {
+                        <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.resetConnections();
+                    } <span class="hljs-keyword">catch</span> (error) {
+                        <span class="hljs-built_in">console</span>.error(error.message);
+                    }
                 }
             }
         });
