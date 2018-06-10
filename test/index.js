@@ -313,11 +313,11 @@ describe('AmqpMessenger', function () {
         let observable2;
         return Promise.all([publisher.start(), subscriber1.start(), subscriber2.start()])
             .then(() => {
-                return subscriber1.createWorkObservable('work.local.message.#', 'test-work-queue');
+                return subscriber1.createWorkObservable('work.local.message1.#', 'test-work-queue1');
             })
             .then((o) => {
                 observable1 = o;
-                return subscriber2.createWorkObservable('work.local.message.#', 'test-work-queue');
+                return subscriber2.createWorkObservable('work.local.message1.#', 'test-work-queue1');
             })
             .then((o) => {
                 observable2 = o;
@@ -325,7 +325,7 @@ describe('AmqpMessenger', function () {
                     context: {
                         systemId: 'work',
                         environment: 'local',
-                        model: 'message',
+                        model: 'message1',
                         objectId: 123,
                         action: 'insert'
                     },
