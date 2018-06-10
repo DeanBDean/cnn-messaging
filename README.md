@@ -17,11 +17,17 @@ To run the tests, use ```docker-compose up -d``` to start the dependancies.
 
 ```
 npm install --save cnn-messaging
+
+This module expects that the user is on a version of node that can handle async/await and the array spread operator. Async/await was added in node 7.10.1 and the array spread operator in 5.12.0. If you are not running a node version compatible with either, then you will need to babelify in order to not run into syntax errors.
 ```
 
 ### Debugging
 
 This module uses the [debug module](https://www.npmjs.com/package/debug). Add the environment variable DEBUG=* to enable debug logging in any app using this module.
+
+## New in 3.5.0
+
+Much more robust restart support. Restarts will remember your previous observables and subscriptions and just work.
 
 ### New in 3.0.0
 
