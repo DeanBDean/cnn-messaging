@@ -228,7 +228,8 @@ describe('AmqpMessenger', function () {
                 return subscriber1.createNotificationObservable('test.*');
             })
             .then((o) => {
-                (subscriber1.observables.notification['test.*']).should.exist;
+                subscriber1.subjects[0].type.should.equal('notification');
+                subscriber1.subjects[0].topic.should.equal('test.*');
                 return o.subscribe();
             })
             .then((sub) => {
@@ -242,7 +243,7 @@ describe('AmqpMessenger', function () {
                 });
             })
             .then(() => {
-                (subscriber1.observables.notification['test.*'] === undefined).should.be.true;
+                subscriber1.subjects[0].subject.observers.length.should.equal(0);
                 return Promise.resolve();
             });
     });
@@ -255,11 +256,11 @@ describe('AmqpMessenger', function () {
         let observable2;
         return Promise.all([publisher.start(), subscriber1.start(), subscriber2.start()])
             .then(() => {
-                return subscriber1.createWorkObservable('work.local.message.#', 'test-work-queue');
+                return subscriber1.createWorkObservable('work.local.message0.#', 'test-work-queue0');
             })
             .then((o) => {
                 observable1 = o;
-                return subscriber2.createWorkObservable('work.local.message.#', 'test-work-queue');
+                return subscriber2.createWorkObservable('work.local.message0.#', 'test-work-queue0');
             })
             .then((o) => {
                 observable2 = o;
@@ -267,7 +268,7 @@ describe('AmqpMessenger', function () {
                     context: {
                         systemId: 'work',
                         environment: 'local',
-                        model: 'message',
+                        model: 'message0',
                         objectId: 123,
                         action: 'insert'
                     },
