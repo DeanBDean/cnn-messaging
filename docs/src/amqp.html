@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>amqp.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="../docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page_wrapper">
+            <div id="jump_page">
+              
+                
+                <a class="source" href="amqp.html">
+                  ./src/amqp.js
+                </a>
+              
+                
+                <a class="source" href="message.html">
+                  ./src/message.js
+                </a>
+              
+                
+                <a class="source" href="messenger.html">
+                  ./src/messenger.js
+                </a>
+              
+                
+                <a class="source" href="websocket.html">
+                  ./src/websocket.js
+                </a>
+              
+            </div>
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>amqp.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">import</span> amqplib <span class="hljs-keyword">from</span> <span class="hljs-string">'amqplib'</span>;
+<span class="hljs-keyword">import</span> { Messenger, states } <span class="hljs-keyword">from</span> <span class="hljs-string">'./messenger'</span>;
+<span class="hljs-keyword">import</span> Message <span class="hljs-keyword">from</span> <span class="hljs-string">'./message'</span>;
+<span class="hljs-keyword">import</span> { Observable } <span class="hljs-keyword">from</span> <span class="hljs-string">'rxjs'</span>;
+<span class="hljs-keyword">import</span> Debug <span class="hljs-keyword">from</span> <span class="hljs-string">'debug'</span>;
+<span class="hljs-keyword">import</span> { ExtendedSubject } <span class="hljs-keyword">from</span> <span class="hljs-string">'./extendedSubject'</span>;
+<span class="hljs-keyword">const</span> debug = Debug(<span class="hljs-string">'cnn-messaging:messenger:amqp'</span>);
+<span class="hljs-keyword">const</span> restartTimer = <span class="hljs-number">3000</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>A messenger that can use amqp topic exchanges and queues</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">export</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AmqpMessenger</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Messenger</span> </span>{</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>Create a new amqp messenger instance</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">constructor</span>(params) {
+        <span class="hljs-keyword">super</span>(params);
+        <span class="hljs-keyword">this</span>.params = params.amqp;
+        <span class="hljs-keyword">this</span>.subjects = [];
+        <span class="hljs-keyword">this</span>.preservedObservableInputs = [];
+        <span class="hljs-keyword">this</span>.selfCalledClose = <span class="hljs-literal">false</span>;
+        <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">this</span>.params.connectionString || !<span class="hljs-keyword">this</span>.params.exchangeName) {
+            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Not properly configured for AMQP. See the README.'</span>);
+        }
+    }
+
+    <span class="hljs-keyword">async</span> * restartIterator() {
+        <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>) {
+            <span class="hljs-keyword">yield</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>(<span class="hljs-keyword">async</span> (resolve) =&gt; {
+                <span class="hljs-keyword">try</span> {
+                    <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.start();
+                    resolve({ <span class="hljs-attr">done</span>: <span class="hljs-literal">true</span> });
+                } <span class="hljs-keyword">catch</span> (error) {
+                    setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =&gt;</span> {
+                        resolve({ <span class="hljs-attr">done</span>: <span class="hljs-literal">false</span>, <span class="hljs-attr">errorMessage</span>: error.message });
+                    }, restartTimer);
+                }
+            })
+        }
+    }
+
+    <span class="hljs-keyword">async</span> resetConnections() {
+        <span class="hljs-keyword">for</span> <span class="hljs-keyword">await</span> (<span class="hljs-keyword">const</span> result <span class="hljs-keyword">of</span> <span class="hljs-keyword">this</span>.restartIterator()) {
+            <span class="hljs-keyword">if</span> (result.done) {
+                <span class="hljs-keyword">break</span>;
+            }
+            <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`AMQP connection restart failed: <span class="hljs-subst">${result.errorMessage}</span>, attempting again`</span>);
+        }
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'AMQP connection restarted after connection closed'</span>);
+        <span class="hljs-keyword">this</span>.preservedObservableInputs.forEach(<span class="hljs-function">(<span class="hljs-params">{unsubscribes}</span>) =&gt;</span> {
+            <span class="hljs-keyword">if</span> (unsubscribes) {
+                unsubscribes.forEach(<span class="hljs-keyword">async</span> (unsubscribe) =&gt; {
+                    <span class="hljs-keyword">await</span> unsubscribe();
+                })
+            }
+        });
+        <span class="hljs-keyword">this</span>.subjects.forEach(<span class="hljs-function">(<span class="hljs-params">{subject}</span>) =&gt;</span> {
+            subject.unsubscribe();
+        })
+        <span class="hljs-keyword">this</span>.subjects= [];
+        <span class="hljs-keyword">this</span>.preservedObservableInputs.forEach(<span class="hljs-keyword">async</span> ({topic, type, queue, subscriptions, unsubscribes}) =&gt; {
+            unsubscribes = [];
+            <span class="hljs-keyword">const</span> observable = <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>._createObservable(topic, type, queue, <span class="hljs-literal">true</span>);
+            <span class="hljs-keyword">if</span> (subscriptions) {
+                subscriptions.forEach(<span class="hljs-function">(<span class="hljs-params">args</span>) =&gt;</span> {
+                    observable.internalSubscribe(...args);
+                });
+            }
+            <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`AMQP Observable for topic <span class="hljs-subst">${topic}</span>, type <span class="hljs-subst">${type}</span> and queue <span class="hljs-subst">${queue}</span> successfully restablished`</span>);
+        });
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve();
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>start the service</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">async</span> start() {
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.state !== states.stopped) {
+            <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.reject(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">`Cannot start when in state: <span class="hljs-subst">${<span class="hljs-keyword">this</span>.state}</span>`</span>));
+        }
+        <span class="hljs-keyword">this</span>.state = states.starting;
+        debug(<span class="hljs-string">'starting'</span>);
+
+        <span class="hljs-keyword">let</span> conn;
+        <span class="hljs-keyword">try</span> {
+            conn = <span class="hljs-keyword">await</span> amqplib.connect(<span class="hljs-keyword">this</span>.params.connectionString);
+        } <span class="hljs-keyword">catch</span> (e) {
+            <span class="hljs-keyword">this</span>.state = states.stopped;
+            <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.reject(e);
+        }
+        <span class="hljs-keyword">this</span>.connection = conn;
+        <span class="hljs-keyword">this</span>.connection.on(<span class="hljs-string">'error'</span>, <span class="hljs-keyword">async</span> (err) =&gt; {
+            <span class="hljs-keyword">this</span>.state = states.stopped;
+            <span class="hljs-keyword">if</span> (err &amp;&amp; err.message !== <span class="hljs-string">'Connection closing'</span>) {
+                <span class="hljs-built_in">console</span>.error(<span class="hljs-string">'AMQP connection error"'</span>, err.message);
+            }
+            <span class="hljs-keyword">this</span>.subjects.forEach(<span class="hljs-keyword">async</span> ({ subject }) =&gt; {
+                <span class="hljs-keyword">await</span> subject.error();
+            });
+            <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.resetConnections();
+        });
+        <span class="hljs-keyword">this</span>.connection.on(<span class="hljs-string">'close'</span>, () =&gt; {
+            <span class="hljs-keyword">this</span>.state = states.stopped;
+            <span class="hljs-keyword">let</span> subjectHadError = <span class="hljs-literal">false</span>;
+            <span class="hljs-keyword">this</span>.subjects.forEach(<span class="hljs-keyword">async</span> ({ subject }) =&gt; {
+                <span class="hljs-keyword">if</span> (!subject.hasError) {
+                    <span class="hljs-keyword">await</span> subject.complete();
+                } <span class="hljs-keyword">else</span> {
+                    subjectHadError = <span class="hljs-literal">true</span>;
+                }
+            })
+            <span class="hljs-keyword">if</span> (!subjectHadError) {
+                <span class="hljs-keyword">this</span>.resetConnections();
+            }
+        });
+        debug(<span class="hljs-string">'created connection'</span>);
+
+        <span class="hljs-keyword">this</span>.channel = {
+            <span class="hljs-attr">notification</span>: <span class="hljs-keyword">await</span> conn.createChannel(),
+            <span class="hljs-attr">work</span>: <span class="hljs-keyword">await</span> conn.createChannel()
+        };
+        <span class="hljs-keyword">this</span>.channel.work.prefetch(<span class="hljs-number">1</span>, <span class="hljs-literal">true</span>);
+        debug(<span class="hljs-string">'created channels'</span>);
+
+        <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.channel.notification.assertExchange(<span class="hljs-keyword">this</span>.params.exchangeName, <span class="hljs-string">'topic'</span>, {<span class="hljs-attr">durable</span>: <span class="hljs-literal">true</span>});
+        <span class="hljs-keyword">this</span>.state = states.started;
+        debug(<span class="hljs-string">'started'</span>);
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve();
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>stop the service</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">async</span> stop() {
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.state !== states.started) {
+            <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.reject(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">`Cannot stop when in state: <span class="hljs-subst">${<span class="hljs-keyword">this</span>.state}</span>`</span>));
+        }
+        <span class="hljs-keyword">this</span>.selfCalledClose = <span class="hljs-literal">true</span>;
+        <span class="hljs-keyword">this</span>.state = states.stopping;
+        debug(<span class="hljs-string">'stopping'</span>);
+
+        <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.channel.work.close();
+        <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.channel.notification.close();
+        debug(<span class="hljs-string">'closed channels'</span>);
+
+        <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.connection.close();
+        debug(<span class="hljs-string">'closed connection'</span>);
+
+        <span class="hljs-keyword">this</span>.state = states.stopped;
+        debug(<span class="hljs-string">'stopped'</span>);
+
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve();
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>publish a message to a topic</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">async</span> publish(topicOrMessage, messageOnly) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>support old method signature</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        <span class="hljs-keyword">const</span> message = messageOnly || topicOrMessage;
+        <span class="hljs-keyword">let</span> topic = topicOrMessage;
+        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> topicOrMessage !== <span class="hljs-string">'string'</span>) {
+            topic = message.getTopic();
+        }
+
+        debug(<span class="hljs-string">`publish to topic: <span class="hljs-subst">${topic}</span>, message: <span class="hljs-subst">${<span class="hljs-built_in">JSON</span>.stringify(message)}</span>`</span>);
+        <span class="hljs-keyword">if</span> (!(message <span class="hljs-keyword">instanceof</span> Message)) {
+            <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.reject(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'provided message is not an instance of Message'</span>));
+        }
+
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>(<span class="hljs-function">(<span class="hljs-params">resolve, reject</span>) =&gt;</span> {
+            <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.channel.notification.publish(<span class="hljs-keyword">this</span>.params.exchangeName, topic, message.toAmqp())) {
+                debug(<span class="hljs-string">'amqp sent message'</span>);
+                <span class="hljs-keyword">return</span> resolve();
+            }
+            <span class="hljs-keyword">return</span> reject(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Publish failure. Queue may be full.'</span>));
+        });
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <p>create an observable for a given topic, type, and queue</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">async</span> _createObservable(topic, type, queue, recreating = <span class="hljs-literal">false</span>) {
+        <span class="hljs-keyword">let</span> alreadyCreatedIndex = <span class="hljs-number">-1</span>;
+        <span class="hljs-keyword">this</span>.subjects.forEach(<span class="hljs-function">(<span class="hljs-params">subjectObject, index</span>) =&gt;</span> {
+            <span class="hljs-keyword">if</span> (subjectObject.topic === topic &amp;&amp; subjectObject.type === type) {
+                alreadyCreatedIndex = index;
+            }
+        });
+        <span class="hljs-keyword">if</span> (alreadyCreatedIndex !== <span class="hljs-number">-1</span>) {
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.subjects[alreadyCreatedIndex].subject;
+        }
+
+        <span class="hljs-keyword">if</span> (!recreating) {
+            <span class="hljs-keyword">this</span>.preservedObservableInputs.push({
+                topic,
+                type,
+                queue,
+                <span class="hljs-attr">subscriptions</span>: [],
+                <span class="hljs-attr">unsubscribes</span>: []
+            });
+        }
+        debug(<span class="hljs-string">`creating <span class="hljs-subst">${type}</span> observable for topic: <span class="hljs-subst">${topic}</span>`</span>);
+        <span class="hljs-keyword">let</span> queueparams = {
+            <span class="hljs-attr">durable</span>: <span class="hljs-literal">false</span>,
+            <span class="hljs-attr">exclusive</span>: <span class="hljs-literal">true</span>
+        };
+        <span class="hljs-keyword">let</span> noAck = <span class="hljs-literal">true</span>;
+        <span class="hljs-keyword">if</span> (type === <span class="hljs-string">'work'</span>) {
+            queueparams = {
+                <span class="hljs-attr">durable</span>: <span class="hljs-literal">true</span>,
+                <span class="hljs-attr">exclusive</span>: <span class="hljs-literal">false</span>
+            };
+            noAck = <span class="hljs-literal">false</span>;
+        }
+        debug(<span class="hljs-string">'creating'</span>, type, <span class="hljs-string">'queue with params:'</span>, queueparams, <span class="hljs-string">'noAck:'</span>, noAck);
+        <span class="hljs-keyword">const</span> q = <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.channel[type].assertQueue(queue, queueparams);
+        <span class="hljs-keyword">const</span> queueName = q.queue;
+        <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.channel[type].bindQueue(queueName, <span class="hljs-keyword">this</span>.params.exchangeName, topic);
+        debug(<span class="hljs-string">`created <span class="hljs-subst">${type}</span> subscription to topic: <span class="hljs-subst">${topic}</span>, queue: <span class="hljs-subst">${queueName}</span>`</span>);
+        <span class="hljs-keyword">const</span> observable = <span class="hljs-keyword">new</span> Observable.create(<span class="hljs-function">(<span class="hljs-params">observer</span>) =&gt;</span> {
+            <span class="hljs-keyword">let</span> consTag;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>start consuming from the amqp queue</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">this</span>.channel[type].consume(queueName, (msg) =&gt; {
+                observer.next(Message.fromAmqp(msg, <span class="hljs-keyword">this</span>.channel[type]));
+            }, {noAck})
+                .then(<span class="hljs-function">(<span class="hljs-params">res</span>) =&gt;</span> {
+                    consTag = res.consumerTag;
+                });</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <p>return the function that handles unsubscribe here</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>            <span class="hljs-keyword">return</span> <span class="hljs-keyword">async</span> () =&gt; {
+                debug(<span class="hljs-string">`stop <span class="hljs-subst">${type}</span> subscription to <span class="hljs-subst">${topic}</span>, queue: <span class="hljs-subst">${queueName}</span>`</span>);
+                <span class="hljs-keyword">if</span> (type !== <span class="hljs-string">'work'</span>) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>unbind the queue from the topic to stop routing at the amqp server</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.channel[type].unbindQueue(queueName, <span class="hljs-keyword">this</span>.params.exchangeName, topic);
+                    debug(<span class="hljs-string">`unbound queue <span class="hljs-subst">${queueName}</span> to topic <span class="hljs-subst">${topic}</span>`</span>);
+                }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>stop consuming from the queue</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.channel[type].cancel(consTag);
+                debug(<span class="hljs-string">`stopped receiving new <span class="hljs-subst">${type}</span> messages from <span class="hljs-subst">${topic}</span>`</span>);
+                <span class="hljs-keyword">if</span> (type !== <span class="hljs-string">'work'</span>) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <p>delete queue</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>                    debug(<span class="hljs-string">`deleting queue <span class="hljs-subst">${queueName}</span>`</span>);
+                    <span class="hljs-keyword">await</span> <span class="hljs-keyword">this</span>.channel[type].deleteQueue(queueName);
+                }
+                <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve();
+            };
+        });
+        <span class="hljs-keyword">const</span> subject = <span class="hljs-keyword">new</span> ExtendedSubject(<span class="hljs-keyword">this</span>.preservedObservableInputs, topic, type, queue);
+        observable.subscribe(subject);
+        <span class="hljs-keyword">this</span>.subjects.push({
+            topic,
+            type,
+            subject
+        })
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve(subject);
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-14">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-14">&#182;</a>
+              </div>
+              <p>create an observable for a given topic, that is meant for multiple recipients per message</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">async</span> createNotificationObservable(topic) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._createObservable(topic, <span class="hljs-string">'notification'</span>, <span class="hljs-string">''</span>);
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-15">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-15">&#182;</a>
+              </div>
+              <p>create an observable for a given topic, that is meant for a single recipient per message</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">async</span> createWorkObservable(topic, queue) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>._createObservable(topic, <span class="hljs-string">'work'</span>, queue);
+    }
+}
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> AmqpMessenger;</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
