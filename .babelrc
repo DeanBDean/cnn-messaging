@@ -1,21 +1,12 @@
 {
-    "env": {
-        "test": {
-          "plugins": [ "istanbul" ]
-        }
-    },
     "presets": [
-        [
-            "env",
-            {
-                "targets": {
-                    "node": "current"
-                }
-            }
-        ],
-        "flow"
+        ["@babel/preset-env", {
+          "targets": {
+            "node": "current"
+          }
+        }]
     ],
     "plugins": [
-        "add-module-exports"
+        "@babel/plugin-proposal-async-generator-functions"
     ]
 }

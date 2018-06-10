@@ -1,5 +1,3 @@
-// @flow
-
 import events from 'events';
 import { Observable, Subject } from 'rxjs';
 import Message from './message';
@@ -7,6 +5,7 @@ import WebsocketRelay from './websocket';
 import Debug from 'debug';
 const debug = Debug('cnn-messaging:messenger');
 
+// possible states for the messenger
 export const states = {
     stopped: 'STOPPED',
     starting: 'STARTING',
@@ -15,27 +14,11 @@ export const states = {
     error: 'ERROR'
 }
 
-/**
-An in-memory messenger, providing pub/sub like features
-*/
+// An in-memory messenger, providing pub/sub like features
 export class Messenger extends events.EventEmitter {
-    state: string;
-    subscriptions: {
-        notification: Object;
-        work: Object;
-    }
-    observables: {
-        notification: Object;
-        work: Object;
-    }
-    websocketRelay: WebsocketRelay;
-
-    /**
-    Create a new messenger instance
-    */
-    constructor(params: {port?: number, http?: any, websocketActive?: boolean}) {
+    // Create a new messenger instance
+    constructor(params = {}) {
         super();
-        params = params || {};
         let websocketActive;
         if (typeof params.websocketActive === 'undefined') { // default is for websocket to be active
             websocketActive = true;
@@ -72,10 +55,8 @@ export class Messenger extends events.EventEmitter {
         }
     }
 
-    /**
-    start the service
-    */
-    async start(): Promise<*> {
+    // start the service
+    async start() {
         return new Promise((resolve, reject) => {
             if (this.state !== states.stopped) {
                 return reject(new Error(`Cannot start when in state: ${this.state}`));
@@ -90,10 +71,8 @@ export class Messenger extends events.EventEmitter {
         });
     }
 
-    /**
-    stop the service
-    */
-    async stop(): Promise<*> {
+    // stop the service
+    async stop() {
         return new Promise((resolve, reject) => {
             if (this.state !== states.started) {
                 return reject(new Error(`Cannot stop when in state: ${this.state}`));
@@ -108,12 +87,10 @@ export class Messenger extends events.EventEmitter {
         });
     }
 
-    /**
-    publish a message to a topic
-    */
-    async publish(topicOrMessage: any, messageOnly?: Message): Promise<*> {
+    // publish a message to a topic
+    async publish(topicOrMessage, messageOnly) {
         // support old method signature
-        const message = (messageOnly || topicOrMessage: Message);
+        const message = messageOnly || topicOrMessage;
         let topic = topicOrMessage;
         if (typeof topicOrMessage !== 'string') {
             topic = message.getTopic();
@@ -126,20 +103,18 @@ export class Messenger extends events.EventEmitter {
         return Promise.resolve();
     }
 
-    /**
-    create an observable for a given topic, that is meant for multiple recipients per message
-    */
-    async createNotificationObservable(topic: string): Promise<Observable<*>> {
+    // create an observable for a given topic, that is meant for multiple recipients per message
+    async createNotificationObservable(topic) {
         debug(`creating observable for topic: ${topic}`);
         return Promise.resolve(new Subject());
     }
 
-    /**
-    create an observable for a given topic, that is meant for a single recipient per message
-    */
-    async createWorkObservable(topic: string, sharedQueue: string): Promise<Observable<*>> {
+    // create an observable for a given topic, that is meant for a single recipient per message
+    async createWorkObservable(topic, sharedQueue) {
         debug(`creating observable for: ${sharedQueue} to topic: ${topic}`);
         return Promise.resolve(new Subject());
     }
 }
+
+export default Messenger;
 
