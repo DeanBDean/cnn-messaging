@@ -27,14 +27,6 @@ export class Messenger extends events.EventEmitter {
         }
 
         this.state = states.stopped;
-        this.subscriptions = {
-            notification: {},
-            work: {}
-        };
-        this.observables = {
-            notification: {},
-            work: {}
-        };
         if (websocketActive && params.port) {
             const interval = (process.env.PINGINTERVAL && parseInt(process.env.PINGINTERVAL)) || 30000;
             debug('got port, creating websocket relay with ping interval', interval);

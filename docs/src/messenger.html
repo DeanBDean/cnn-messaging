@@ -129,14 +129,6 @@
         }
 
         <span class="hljs-keyword">this</span>.state = states.stopped;
-        <span class="hljs-keyword">this</span>.subscriptions = {
-            <span class="hljs-attr">notification</span>: {},
-            <span class="hljs-attr">work</span>: {}
-        };
-        <span class="hljs-keyword">this</span>.observables = {
-            <span class="hljs-attr">notification</span>: {},
-            <span class="hljs-attr">work</span>: {}
-        };
         <span class="hljs-keyword">if</span> (websocketActive &amp;&amp; params.port) {
             <span class="hljs-keyword">const</span> interval = (process.env.PINGINTERVAL &amp;&amp; <span class="hljs-built_in">parseInt</span>(process.env.PINGINTERVAL)) || <span class="hljs-number">30000</span>;
             debug(<span class="hljs-string">'got port, creating websocket relay with ping interval'</span>, interval);
