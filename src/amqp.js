@@ -49,21 +49,18 @@ export class AmqpMessenger extends Messenger {
     }
 
     /**
-    Generator that iterates attempts to restart the amqp connection
+    Returns a promise that attempts to restart the amqp connection
     */
-    async restartIterator(): Promise<*> {
+    restartPromise(): Promise<*> {
         return new Promise(async (resolve) => {
-            while (true) { // eslint-disable-line no-constant-condition
-                try {
-                    await this.start();
-                    break;
-                } catch (error) {
-                    setTimeout(() => {
-                        console.log(`AMQP connection restart failed: ${error.message}, attempting again`);
-                    }, restartTimer);
-                }
+            try {
+                await this.start();
+                resolve({done: true});
+            } catch (error) {
+                setTimeout(() => {
+                    resolve({done: false, message: error.message});
+                }, restartTimer);
             }
-            resolve();
         });
     }
 
@@ -71,7 +68,13 @@ export class AmqpMessenger extends Messenger {
     Reset the observable connections to the preserved observables and subscribes
     */
     async resetConnections(): Promise<*> {
-        await this.restartIterator();
+        while (true) { // eslint-disable-line no-constant-condition
+            const result = await this.restartPromise();
+            if (result.done) {
+                break;
+            }
+            console.log(`AMQP connection restart failed: ${result.message}, attempting again`);
+        }
         console.log('AMQP connection restarted after connection closed');
         this.preservedObservableInputs.forEach(({unsubscribes}) => {
             if (unsubscribes) {

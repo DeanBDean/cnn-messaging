@@ -3,7 +3,7 @@
 ### Table of Contents
 
 -   [AmqpMessenger][1]
-    -   [restartIterator][2]
+    -   [restartPromise][2]
     -   [resetConnections][3]
     -   [start][4]
     -   [stop][5]
@@ -40,9 +40,9 @@ A messenger that can use amqp topic exchanges and queues
 
 -   `params` **{amqp: {connectionString: [string][28], exchangeName: [string][28]}, port: [number][29]?, http&#x3A; any?, websocketActive: [boolean][30]?}** 
 
-### restartIterator
+### restartPromise
 
-Generator that iterates attempts to restart the amqp connection
+Returns a promise that attempts to restart the amqp connection
 
 Returns **[Promise][31]&lt;any>** 
 
@@ -266,7 +266,7 @@ A performant websocket relay for messenger
 
 [1]: #amqpmessenger
 
-[2]: #restartiterator
+[2]: #restartpromise
 
 [3]: #resetconnections
 
