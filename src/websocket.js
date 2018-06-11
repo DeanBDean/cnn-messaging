@@ -1,3 +1,5 @@
+// @flow
+
 import events from 'events';
 import Messenger from './messenger';
 import Debug from 'debug';
@@ -13,12 +15,24 @@ try {
     debug(`uws module not available. ${e}. Disabling...`);
 }
 
-
-// A performant websocket relay for messenger
+/**
+A performant websocket relay for messenger
+*/
 export class WebsocketRelay extends events.EventEmitter {
-    // create a new instance of websocket relay
-    constructor(params = {}) {
+    io: WebSocket.Server;
+    messenger: Messenger;
+    connectionCount: number;
+    connections: number;
+    observables: Object;
+    subscriptions: Object;
+    pingInterval: number;
+    pingService: number;
+    /**
+    create a new instance of websocket relay
+    */
+    constructor(params: {messenger: Messenger, port?: number, http?: any, pingInterval: number}) {
         super();
+        params = params || {};
         if (!params.messenger || (!params.port && !params.http)) {
             throw new Error('You must provide an instance of a messenger and a port for web socket server');
         }
@@ -50,11 +64,11 @@ export class WebsocketRelay extends events.EventEmitter {
         this.pingService = setInterval(() => {
             this.sendPing();
         }, this.pingInterval);
-
-        this.pingService.unref();
+        // $FlowFixMe (flow does not understand the next line)
+        this.pingService.unref(); // allows graceful shutdown
     }
 
-    sendPing() {
+    sendPing(): void {
         const startTime = new Date();
         this.io && this.io.clients.forEach((ws) => {
             if (ws.isAlive === false) {
@@ -71,7 +85,7 @@ export class WebsocketRelay extends events.EventEmitter {
         });
     }
 
-    handleSocketConnection(socket) {
+    handleSocketConnection(socket: Object): void {
         this.connectionCount++;
         this.connections++;
 
@@ -92,7 +106,7 @@ export class WebsocketRelay extends events.EventEmitter {
         });
     }
 
-    handleSocketMessage(socket, msg) {
+    handleSocketMessage(socket: Object, msg: string): void {
         let request;
         try {
             request = JSON.parse(msg);
@@ -113,7 +127,7 @@ export class WebsocketRelay extends events.EventEmitter {
         }
     }
 
-    subscribe(topic, socket) {
+    subscribe(topic: string, socket: Object): void {
         debug(`got subscribe request for ${topic}`);
         if (!this.observables[topic]) {
             this.messenger.createNotificationObservable(topic)
@@ -133,7 +147,7 @@ export class WebsocketRelay extends events.EventEmitter {
         this.subscriptions[topic][socket.id] = socket;
     }
 
-    unsubscribe(topic, socketId) {
+    unsubscribe(topic: string, socketId: string): void {
         if (this.subscriptions[topic][socketId]) {
             delete this.subscriptions[topic][socketId];
             if (!Object.keys(this.subscriptions[topic]).length) {
@@ -147,7 +161,7 @@ export class WebsocketRelay extends events.EventEmitter {
         }
     }
 
-    handleSocketClose(socket) {
+    handleSocketClose(socket: Object): void {
         this.connections--;
         debug(`socket ${socket.id} disconnected`);
         Object.keys(this.subscriptions).forEach((topic) => {
@@ -155,7 +169,7 @@ export class WebsocketRelay extends events.EventEmitter {
         });
     }
 
-    relay(topic, msg) {
+    relay(topic: string, msg: string): void {
         const startTime = new Date();
         let subscribers = 0;
         if (this.subscriptions[topic]) {

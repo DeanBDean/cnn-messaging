@@ -1,16 +1,43 @@
+// @flow
+
 import amqplib from 'amqplib';
-import { Messenger, states } from './messenger';
+import {Messenger, states} from './messenger';
 import Message from './message';
-import { Observable } from 'rxjs';
+import {Observable} from 'rxjs';
 import Debug from 'debug';
-import { ExtendedSubject } from './extendedSubject';
+import {ExtendedSubject} from './extendedSubject';
 const debug = Debug('cnn-messaging:messenger:amqp');
 const restartTimer = 3000;
 
-// A messenger that can use amqp topic exchanges and queues
+/**
+A messenger that can use amqp topic exchanges and queues
+*/
 export class AmqpMessenger extends Messenger {
-    // Create a new amqp messenger instance
-    constructor(params) {
+    params: {
+        connectionString: string;
+        exchangeName: string;
+    };
+    channel: {
+        notification: any;
+        work: any;
+    };
+    connection: any;
+    subjects: Array<Object>;
+    preservedObservableInputs: Array<Object>;
+    selfCalledClose: boolean;
+
+    /**
+    Create a new amqp messenger instance
+    */
+    constructor(params: {
+        amqp: {
+            connectionString: string;
+            exchangeName: string;
+        };
+        port?: number;
+        http?: any;
+        websocketActive?: boolean;
+    }) {
         super(params);
         this.params = params.amqp;
         this.subjects = [];
@@ -21,16 +48,18 @@ export class AmqpMessenger extends Messenger {
         }
     }
 
-    // Generator that iterates attempts to restart the amqp connection
-    async restartIterator() {
+    /**
+    Generator that iterates attempts to restart the amqp connection
+    */
+    async restartIterator(): Promise<*> {
         return new Promise(async (resolve) => {
-            while(true) {
+            while (true) { // eslint-disable-line no-constant-condition
                 try {
                     await this.start();
                     break;
                 } catch (error) {
                     setTimeout(() => {
-                        console.log(`AMQP connection restart failed: ${result.errorMessage}, attempting again`);
+                        console.log(`AMQP connection restart failed: ${error.message}, attempting again`);
                     }, restartTimer);
                 }
             }
@@ -38,23 +67,24 @@ export class AmqpMessenger extends Messenger {
         });
     }
 
-    // Reset the observable connections to the preserved observables and subscribes
-    async resetConnections() {
-        await this.restartIterator()
+    /**
+    Reset the observable connections to the preserved observables and subscribes
+    */
+    async resetConnections(): Promise<*> {
+        await this.restartIterator();
         console.log('AMQP connection restarted after connection closed');
         this.preservedObservableInputs.forEach(({unsubscribes}) => {
             if (unsubscribes) {
                 unsubscribes.forEach(async (unsubscribe) => {
                     await unsubscribe();
-                })
+                });
             }
         });
         this.subjects.forEach(({subject}) => {
             subject.unsubscribe();
-        })
-        this.subjects= [];
-        this.preservedObservableInputs.forEach(async ({topic, type, queue, subscriptions, unsubscribes}) => {
-            unsubscribes = [];
+        });
+        this.subjects = [];
+        this.preservedObservableInputs.forEach(async ({topic, type, queue, subscriptions}) => {
             const observable = await this._createObservable(topic, type, queue, true);
             if (subscriptions) {
                 subscriptions.forEach((args) => {
@@ -66,8 +96,10 @@ export class AmqpMessenger extends Messenger {
         return Promise.resolve();
     }
 
-    // start the service
-    async start() {
+    /**
+    start the service
+    */
+    async start(): Promise<*> {
         if (this.state !== states.stopped) {
             return Promise.reject(new Error(`Cannot start when in state: ${this.state}`));
         }
@@ -88,7 +120,7 @@ export class AmqpMessenger extends Messenger {
                 if (err && err.message !== 'Connection closing') {
                     console.error('AMQP connection error"', err.message);
                 }
-                this.subjects.forEach(async ({ subject }) => {
+                this.subjects.forEach(async ({subject}) => {
                     await subject.error();
                 });
                 try {
@@ -102,13 +134,13 @@ export class AmqpMessenger extends Messenger {
             this.state = states.stopped;
             if (!this.selfCalledClose) {
                 let subjectHadError = false;
-                this.subjects.forEach(async ({ subject }) => {
+                this.subjects.forEach(async ({subject}) => {
                     if (!subject.hasError) {
                         await subject.complete();
                     } else {
                         subjectHadError = true;
                     }
-                })
+                });
                 if (!subjectHadError) {
                     try {
                         await this.resetConnections();
@@ -133,8 +165,10 @@ export class AmqpMessenger extends Messenger {
         return Promise.resolve();
     }
 
-    // stop the service
-    async stop() {
+    /**
+    stop the service
+    */
+    async stop(): Promise<*> {
         if (this.state !== states.started) {
             return Promise.reject(new Error(`Cannot stop when in state: ${this.state}`));
         }
@@ -155,10 +189,12 @@ export class AmqpMessenger extends Messenger {
         return Promise.resolve();
     }
 
-    // publish a message to a topic
-    async publish(topicOrMessage, messageOnly) {
+    /**
+    publish a message to a topic
+    */
+    async publish(topicOrMessage:any, messageOnly?: Message): Promise<*> {
         // support old method signature
-        const message = messageOnly || topicOrMessage;
+        const message = (messageOnly || topicOrMessage: Message);
         let topic = topicOrMessage;
         if (typeof topicOrMessage !== 'string') {
             topic = message.getTopic();
@@ -178,8 +214,13 @@ export class AmqpMessenger extends Messenger {
         });
     }
 
-    // create an observable for a given topic, type, and queue
-    async _createObservable(topic, type, queue, recreating = false) {
+    /**
+    create an observable for a given topic, type, and queue
+    */
+    async _createObservable(topic: string, type: string, queue: string, recreating?: boolean): Promise<*> {
+        if (typeof recreating === 'undefined') {
+            recreating = false;
+        }
         let alreadyCreatedIndex = -1;
         this.subjects.forEach((subjectObject, index) => {
             if (subjectObject.topic === topic && subjectObject.type === type) {
@@ -252,17 +293,21 @@ export class AmqpMessenger extends Messenger {
             topic,
             type,
             subject
-        })
+        });
         return Promise.resolve(subject);
     }
 
-    // create an observable for a given topic, that is meant for multiple recipients per message
-    async createNotificationObservable(topic) {
+    /**
+    create an observable for a given topic, that is meant for multiple recipients per message
+    */
+    async createNotificationObservable(topic: string): Promise<*> {
         return this._createObservable(topic, 'notification', '');
     }
 
-    // create an observable for a given topic, that is meant for a single recipient per message
-    async createWorkObservable(topic, queue) {
+    /**
+    create an observable for a given topic, that is meant for a single recipient per message
+    */
+    async createWorkObservable(topic: string, queue: string): Promise<*> {
         return this._createObservable(topic, 'work', queue);
     }
 }

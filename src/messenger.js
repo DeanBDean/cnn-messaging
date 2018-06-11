@@ -1,5 +1,7 @@
+// @flow
+
 import events from 'events';
-import { Observable, Subject } from 'rxjs';
+import {Observable, Subject} from 'rxjs';
 import Message from './message';
 import WebsocketRelay from './websocket';
 import Debug from 'debug';
@@ -12,13 +14,21 @@ export const states = {
     started: 'STARTED',
     stopping: 'STOPPING',
     error: 'ERROR'
-}
+};
 
-// An in-memory messenger, providing pub/sub like features
+/**
+An in-memory messenger, providing pub/sub like features
+*/
 export class Messenger extends events.EventEmitter {
-    // Create a new messenger instance
-    constructor(params = {}) {
+    state: string;
+    websocketRelay: WebsocketRelay;
+
+    /**
+    Create a new messenger instance
+    */
+    constructor(params: {port?: number, http?: any, websocketActive?: boolean}) {
         super();
+        params = params || {};
         let websocketActive;
         if (typeof params.websocketActive === 'undefined') { // default is for websocket to be active
             websocketActive = true;
@@ -47,8 +57,10 @@ export class Messenger extends events.EventEmitter {
         }
     }
 
-    // start the service
-    async start() {
+    /**
+    start the service
+    */
+    async start(): Promise<*> {
         return new Promise((resolve, reject) => {
             if (this.state !== states.stopped) {
                 return reject(new Error(`Cannot start when in state: ${this.state}`));
@@ -63,8 +75,10 @@ export class Messenger extends events.EventEmitter {
         });
     }
 
-    // stop the service
-    async stop() {
+    /**
+    stop the service
+    */
+    async stop(): Promise<*> {
         return new Promise((resolve, reject) => {
             if (this.state !== states.started) {
                 return reject(new Error(`Cannot stop when in state: ${this.state}`));
@@ -79,10 +93,12 @@ export class Messenger extends events.EventEmitter {
         });
     }
 
-    // publish a message to a topic
-    async publish(topicOrMessage, messageOnly) {
+    /**
+    publish a message to a topic
+    */
+    async publish(topicOrMessage: any, messageOnly?: Message): Promise<*> {
         // support old method signature
-        const message = messageOnly || topicOrMessage;
+        const message = (messageOnly || topicOrMessage: Message);
         let topic = topicOrMessage;
         if (typeof topicOrMessage !== 'string') {
             topic = message.getTopic();
@@ -95,14 +111,18 @@ export class Messenger extends events.EventEmitter {
         return Promise.resolve();
     }
 
-    // create an observable for a given topic, that is meant for multiple recipients per message
-    async createNotificationObservable(topic) {
+    /**
+    create an observable for a given topic, that is meant for multiple recipients per message
+    */
+    async createNotificationObservable(topic: string): Promise<Observable<*>> {
         debug(`creating observable for topic: ${topic}`);
         return Promise.resolve(new Subject());
     }
 
-    // create an observable for a given topic, that is meant for a single recipient per message
-    async createWorkObservable(topic, sharedQueue) {
+    /**
+    create an observable for a given topic, that is meant for a single recipient per message
+    */
+    async createWorkObservable(topic: string, sharedQueue: string): Promise<Observable<*>> {
         debug(`creating observable for: ${sharedQueue} to topic: ${topic}`);
         return Promise.resolve(new Subject());
     }

@@ -1,3 +1,5 @@
+// @flow
+
 import uuidV1 from 'uuid/v1';
 import Debug from 'debug';
 const debug = Debug('cnn-messaging:message');
@@ -21,29 +23,47 @@ const defaults = {
     action: 'event'
 };
 
-// sample message data
-// context.systemId, context.environment, context.model, context.objectId, context.action
-export const sampleMessageData = {
-    id: null,
-    timestamp: null,
+type MessageData = {
+    id?: string,
+    timestamp?: string,
     context: {
-        systemId: null,
-        environment: null,
-        model: null,
-        objectId: null,
-        action: null,
-        objectVersion: null,
-        requestId: null,
-        userId: null
+        systemId: string,
+        environment: string,
+        model: string,
+        objectId: string | number,
+        action: string,
+        objectVersion?: string | number,
+        requestId?: string,
+        userId?: string
     },
-    event: null
+    event?: any
 }
 
-// A Message object
+/**
+A Message object
+*/
 export class Message {
-    // create a new instance of Message
-    constructor(message = {}) {
+    id: string;
+    timestamp: string;
+    context: {
+        systemId: string;
+        environment: string;
+        model: string;
+        objectId: string | number;
+        action: string;
+        objectVersion?: string | number;
+        requestId?: string;
+        userId?: string;
+    };
+    event: any;
+    meta: any;
+
+    /**
+    create a new instance of Message
+    */
+    constructor(message: MessageData) {
         debug('new message', message);
+        message = message || {};
         message.context = message.context || defaults;
         this.context = message.context;
         if (actions.indexOf(this.context.action) < 0 && actionsMap[this.context.action]) {
@@ -58,8 +78,10 @@ export class Message {
         this.timestamp = (message.timestamp || (new Date()).toISOString());
     }
 
-    // Stringify the message
-    toString() {
+    /**
+    Stringify the message
+    */
+    toString(): string {
         const shadow = {
             id: this.id,
             timestamp: this.timestamp,
@@ -69,20 +91,24 @@ export class Message {
         return JSON.stringify(shadow);
     }
 
-    // Convert the message for websocket delivery
-    toWS() {
+    /**
+    Convert the message for websocket delivery
+    */
+    toWS(): string {
         return this.toString();
     }
 
-
-    // Convert the message for amqp delivery
-    toAmqp() {
+    /**
+    Convert the message for amqp delivery
+    */
+    toAmqp(): Buffer {
         return new Buffer(this.toString());
     }
 
-
-    // Get the preferred topic name from the message context
-    getTopic() {
+    /**
+    Get the preferred topic name from the message context
+    */
+    getTopic(): string {
         const topic = [];
         const context = this.context || {};
         topic.push((context.systemId || defaults['systemId']));
@@ -93,27 +119,30 @@ export class Message {
         return topic.join('.');
     }
 
-
-    // Ack a work message (mark it as completed)
-    ack() {
+    /**
+    Ack a work message (mark it as completed)
+    */
+    ack(): void {
         if (this.meta && this.meta.rawMessage && this.meta.channel) {
             debug('Ack message', this.meta.rawMessage);
             this.meta.channel.ack(this.meta.rawMessage);
         }
     }
 
-
-    // Nack a work message (mark it as failed, for redelivery)
-    nack() {
+    /**
+    Nack a work message (mark it as failed, for redelivery)
+    */
+    nack(): void {
         if (this.meta && this.meta.rawMessage && this.meta.channel) {
             debug('Nack message', this.meta.rawMessage);
             this.meta.channel.nack(this.meta.rawMessage);
         }
     }
 
-
-    // Convert a raw amqp message into an instance of Message
-    static fromAmqp(rawMessage, channel) {
+    /**
+    Convert a raw amqp message into an instance of Message
+    */
+    static fromAmqp(rawMessage, channel): Message {
         debug(`from amqp: ${JSON.stringify(rawMessage)}`);
         const messageString = rawMessage.content.toString();
         const messageObject = JSON.parse(messageString);
